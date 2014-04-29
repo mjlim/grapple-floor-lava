@@ -126,14 +126,16 @@ require([
 		world.add(Physics.behavior('interactive', {el: renderer.el}));
 
         var handlekey = function handlekey(evt){
-            console.log(evt);
-            console.log(e);
+            //console.log(evt);
+            //console.log(e);
             switch(evt.keyCode)
             {
                 case 119: // w (up)
+                case 87:
                     resizerope(e, -10);
                     break;
                 case 115: // s (down)
+                case 83:
                     resizerope(e, 10);
                     break;
             }
