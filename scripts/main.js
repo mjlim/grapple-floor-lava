@@ -20,6 +20,7 @@ require([
 		'physicsjs/behaviors/body-collision-detection',
 		'physicsjs/behaviors/verlet-constraints',
 		'physicsjs/behaviors/sweep-prune',
+		'physicsjs/behaviors/interactive',
 		'physicsjs/bodies/circle', // circle
 		'physicsjs/bodies/rectangle' // rectangle
 	], function( Physics ) {
@@ -44,6 +45,11 @@ require([
 					}
 				}
 		});
+
+		var ropeStyles = {
+			strokeStyle: '#FF0000',
+			lineWidth: 1
+		};
 
 		// add renderer
 		world.add(renderer);
@@ -115,6 +121,47 @@ require([
 
 		// add some gravity
 		world.add(Physics.behavior('constant-acceleration') );
+
+		// allow interaction
+		world.add(Physics.behavior('interactive', {el: renderer.el}));
+
+		function shootrope(pos){
+			vpos = Physics.vector(pos)
+			console.log("a");
+			constr.remove(e);
+			console.log("b");
+			attach.state.pos = vpos;
+			console.log("c");
+			console.log(ball.state.pos)
+			console.log(attach.state.pos)
+			dist = ball.state.pos.dist(attach.state.pos);
+			console.log("d");
+			console.log(dist);
+			e = constr.distanceConstraint(ball, attach, 0, dist);
+		}
+
+		// clicks
+		world.on({
+				'interact:poke': function(pos){
+					shootrope(pos);
+				}
+		});
+		// lines for rope
+		world.on('render-rope', function (ctx){
+			/* the below is basically copied from the tree demo. not useful right now, keeping for later
+			var constrs = ball.constraints.getConstraints().distanceConstraints,c;
+			for (var i = 0, l = constrs.length; i<l; ++i){
+				c = constrs[i];
+				renderer.drawLine(c.bodyA.state.pos, c.bodyB.state.pos, ropeStyles, ctx);
+			}
+			*/
+			renderer.drawLine(ball.state.pos, attach.state.pos, ropeStyles, ctx);
+		});
+
+		renderer.addLayer('ropes', null, { zIndex:0 }).render = function(){
+			this.ctx.clearRect(0, 0, this.el.width, this.el.height);
+			world.emit('render-rope', this.ctx);
+		};
 
 		// subscribe to ticker to advance the simulation
 		Physics.util.ticker.on(function(time,dt){
