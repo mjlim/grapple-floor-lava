@@ -125,6 +125,24 @@ require([
 		// allow interaction
 		world.add(Physics.behavior('interactive', {el: renderer.el}));
 
+        var handlekey = function handlekey(evt){
+            console.log(evt);
+            console.log(e);
+            switch(evt.keyCode)
+            {
+                case 119: // w (up)
+                    resizerope(e, -10);
+                    break;
+                case 115: // s (down)
+                    resizerope(e, 10);
+                    break;
+            }
+
+            console.log(e.targetLength);
+        }
+
+		document.addEventListener('keypress', handlekey, false)
+
 		function shootrope(pos){
 			vpos = Physics.vector(pos)
 			console.log("a");
@@ -139,6 +157,18 @@ require([
 			console.log(dist);
 			e = constr.distanceConstraint(ball, attach, 0, dist);
 		}
+
+		function resizerope(rope, diff){ // remove and recreate distance constraint with different size
+		    a = rope.bodyA;
+		    b = rope.bodyB;
+		    len = rope.targetLength + diff;
+		    if(len < 0){
+		        len = 0;
+            }
+		    constr.remove(rope);
+		    e = constr.distanceConstraint(a, b, 0, len); // todo: don't reference e here. rework data structures to make sense.
+        }
+
 
 		// clicks
 		world.on({
