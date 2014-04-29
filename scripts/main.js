@@ -27,8 +27,8 @@ require([
 		// do something with the circles
 		//
 	Physics(function(world){
-		var viewWidth = 500;
-		var viewHeight = 300;
+		var viewWidth = 1024;
+		var viewHeight = 1024;
 
 		var renderer = Physics.renderer('canvas', {
 				el: 'viewport',
