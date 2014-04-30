@@ -72,10 +72,11 @@ require([
 		// add a circle
 		var ball = Physics.body('circle', {
 				x: 50,
-				y: 30,
+				y: 60,
 				vx: 0.2,
 				vy: 0.01,
-				radius: 20
+				radius: 20,
+			    label: 'player'
 		});
 
 		var attach = Physics.body('circle', {
@@ -84,6 +85,8 @@ require([
 				radius: 5,
 				treatment: 'static'
 		});
+		
+		var bullet = [];
 
 		world.add(ball);
 		world.add(attach);
@@ -95,16 +98,16 @@ require([
 				height:15,
 				treatment: 'static'
 		});
-
-		var rope = Physics.body('rectangle', {
-				x: 100,
-				y: 50,
-				width: 50,
-				height: 5
+		var platformtwo = Physics.body('rectangle', {
+				x: 700,
+				y: 400,
+				width:300,
+				height:100,
+				treatment: 'static'
 		});
 
-		world.add(rope);
 		world.add(platform);
+		world.add(platformtwo);
 
 		var constr = Physics.behavior('verlet-constraints');
 		//var c = constr.angleConstraint(ball, platform, rope, 0.6)
@@ -114,7 +117,7 @@ require([
 		world.add(constr)
 
 		// ensure objects bounce when edge collision detected
-		world.add(Physics.behavior('body-impulse-response') );
+		world.add(Physics.behavior('body-impulse-response', {check: 'collisions:applyimpulse'}).applyTo([ball, platform]) );
 
 		world.add(Physics.behavior('body-collision-detection'));
 		world.add(Physics.behavior('sweep-prune'));
@@ -138,27 +141,60 @@ require([
                 case 83:
                     resizerope(e, 10);
                     break;
+                default:
+                    //fireball();
             }
 
             console.log(e.targetLength);
         }
 
-		document.addEventListener('keypress', handlekey, false)
+		document.addEventListener('keypress', handlekey, false);
 
-		function shootrope(pos){
-			vpos = Physics.vector(pos)
-			console.log("a");
-			constr.remove(e);
-			console.log("b");
-			attach.state.pos = vpos;
-			console.log("c");
-			console.log(ball.state.pos)
-			console.log(attach.state.pos)
-			dist = ball.state.pos.dist(attach.state.pos);
+        function fireball(angle){
+            vx = Math.sin(angle);
+            vy = Math.cos(angle)*-1;
+            console.log("angle:" + angle + ", " + vx + " " + vy); 
+            console.log(angle);
+            //console.log(vx);
+            //console.log(vy);
+            var b = Physics.body('circle', {
+                x: ball.state.pos.x,
+                y: ball.state.pos.y,
+                vx: vx,
+                vy: vy,
+                radius: 7,
+                label: 'bullet'
+            });
+            world.add(b);
+            bullet.push(b);
+
+
+        }
+
+
+		function shootrope(pos){ // attach rope on click
+		    var relposX = pos.x - ball.state.pos.x;
+		    var relposY = pos.y - ball.state.pos.y; 
+
+		    console.log("relpos: " + relposX + ", " + relposY);
+		        
+			var vpos = Physics.vector(relposX, relposY);
+			console.log(vpos);
+			var angle = vpos.angle() + 0.5*Math.PI;
+			//angle = ball.state.pos.angle(vpos);
+			    
+			fireball(angle);
+			//attach.state.pos = vpos;
+			//attachrope(ball,attach);
+		}
+
+		function attachrope(player, attach){
+			var dist = ball.state.pos.dist(attach.state.pos);
 			console.log("d");
 			console.log(dist);
 			e = constr.distanceConstraint(ball, attach, 0, dist);
-		}
+        }
+
 
 		function resizerope(rope, diff){ // remove and recreate distance constraint with different size
 		    a = rope.bodyA;
@@ -171,6 +207,51 @@ require([
 		    e = constr.distanceConstraint(a, b, 0, len); // todo: don't reference e here. rework data structures to make sense.
         }
 
+        /*
+        world.on('collisions:applyimpulse', function(data){
+        });
+        */
+        world.on('collisions:hook', function(data){
+            constr.remove(e);
+            // bad: move rope anchor to here
+            attach.state.pos = data.bullet.state.pos
+            world.remove(data.bullet)
+            attachrope(ball, attach);
+
+        });
+        world.on('collisions:detected', function(data){
+            //console.log(data);
+            var c;
+            for (var i=0, l=data.collisions.length; i<l; i++){
+                c = data.collisions[i];
+                if (c.bodyA.label == 'bullet' || c.bodyB.label == 'bullet'){
+                    var bul;
+                    var obj;
+                    if (c.bodyA.label == 'bullet'){
+                        bul = c.bodyA;
+                        obj = c.bodyB;
+                    } else {
+                        bul = c.bodyB;
+                        obj = c.bodyA;
+                    }
+                    if (obj.label != 'player'){
+
+                        console.log("bullet collision with a " + obj.label);
+                        var data = {'bullet': bul, 'object': obj}
+                        world.emit('collisions:hook', data)
+                    }
+                    else
+                    {
+                        console.log("collided with player")
+                    }
+
+                }
+                else {
+                    var d = {'collisions': [c]};
+                    world.emit('collisions:applyimpulse', d);
+                }
+            }
+        });
 
 		// clicks
 		world.on({
@@ -199,7 +280,7 @@ require([
 		Physics.util.ticker.on(function(time,dt){
 			world.step(time);
 
-			renderer.drawLine(ball.state.pos, attach.state.pos, { strokeStyle: "#FF0000" });
+			renderer.drawLine(ball.state.pos, attach.state.pos, { strokeStyle: "#FF0000", strokeWidth:2 });
 		});
 
 		// start the ticker
