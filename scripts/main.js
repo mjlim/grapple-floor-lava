@@ -99,7 +99,6 @@ require([
             world.add(this.attach);
 
             this.accelerate = function(v){this.body.accelerate(v);};
-            this.resizerope;
             this.detachRope = function(){
                 this.attachState = AttachStates.free;
                 constr.remove(this.ropeConstraint);
@@ -136,6 +135,7 @@ require([
             };
 
             this.resizeRope = function(diff){ // todo: make this less clunkier. probably set a flag and let the clock deal with it each iter
+                if (this.AttachState != AttachStates.attached){ return; }
                 var len = this.ropeConstraint.targetLength + diff;
                 if (len<0){ len = 0; }
                 constr.remove(this.ropeConstraint);
