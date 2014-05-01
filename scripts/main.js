@@ -208,10 +208,10 @@ require([
                     players[0].ropeLengthDelta = 2;
                     break;
                 case 65: // a (left)
-                    players[0].accelerate(Physics.vector(-0.001));
+                    players[0].accelerate(Physics.vector(-0.0005));
                     break;
                 case 68: // d (right)
-                    players[0].accelerate(Physics.vector(0.001));
+                    players[0].accelerate(Physics.vector(0.0005));
                     break;
                 case 32: // space
                     players[0].detachRope();
