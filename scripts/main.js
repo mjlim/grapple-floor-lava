@@ -56,6 +56,9 @@ require([
 
 		// render each step
 		world.on('step', function(){
+		    if(players[0].ropeLengthDelta != 0){
+		        players[0].resizeRope(players[0].ropeLengthDelta);
+            }
 			world.render();
 		});
 
@@ -94,6 +97,8 @@ require([
             });
             this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, 100);
             this.attachState = AttachStates.attached;
+
+            this.ropeLengthDelta = 0
 
             world.add(this.body);
             world.add(this.attach);
@@ -194,11 +199,13 @@ require([
             {
                 case 119: // w (up)
                 case 87:
-                    players[0].resizeRope(-10);
+                    //players[0].resizeRope(-10);
+                    players[0].ropeLengthDelta = -2;
                     break;
                 case 115: // s (down)
                 case 83:
-                    players[0].resizeRope(10);
+                    //players[0].resizeRope(10);
+                    players[0].ropeLengthDelta = 2;
                     break;
                 case 65: // a (left)
                     players[0].accelerate(Physics.vector(-0.001));
@@ -214,7 +221,18 @@ require([
             //console.log(e.targetLength);
         }
 
+        var handlekeyup = function handlekeyup(evt){
+            switch(evt.keyCode)
+            {
+                case 87: // w up
+                case 83: // s down
+                    players[0].ropeLengthDelta = 0;
+                    break;
+            }
+        };
+
 		document.addEventListener('keydown', handlekey, false);
+		document.addEventListener('keyup', handlekeyup, false);
 
 		function shootrope(pos){ // attach rope on click
 		    var relposX = pos.x - players[0].body.state.pos.x; // todo: don't use players[0]
