@@ -126,7 +126,7 @@ require([
 		world.add(Physics.behavior('constant-acceleration') );
 
 		// allow interaction
-		world.add(Physics.behavior('interactive', {el: renderer.el}));
+		//world.add(Physics.behavior('interactive', {el: renderer.el}));
 
         var handlekey = function handlekey(evt){
             //console.log(evt);
@@ -260,12 +260,50 @@ require([
             }
         });
 
-		// clicks
-		world.on({
-				'interact:poke': function(pos){
-					shootrope(pos);
-				}
-		});
+        var handleclick = function handleclick(e){
+            console.log(e);
+            var pos = getCoords(e);
+            switch(e.button){
+                case 0: // lmb
+                    shootrope(pos);
+                    break;
+                case 2: // rmb
+                    console.log("rmb");
+                    break;
+            }
+
+        }
+        renderer.el.addEventListener('mousedown', handleclick);
+        //block context menu
+        renderer.el.addEventListener('contextmenu', function(e){e.preventDefault();return false;});
+        // helper functions for cursor pos
+        var getElementOffset = function( el ){
+                var curleft = 0
+                    ,curtop = 0
+                    ;
+    
+                if (el.offsetParent) {
+                    do {
+                        curleft += el.offsetLeft;
+                        curtop += el.offsetTop;
+                    } while (el = el.offsetParent);
+                }
+    
+                return { left: curleft, top: curtop };
+            }
+
+        var getCoords = function( e ){
+                var offset = getElementOffset( e.target )
+                    ,obj = ( e.changedTouches && e.changedTouches[0] ) || e
+                    ,x = obj.pageX - offset.left
+                    ,y = obj.pageY - offset.top
+                    ;
+    
+                return {
+                    x: x
+                    ,y: y
+                };
+        };
 		// lines for rope
 		world.on('render-rope', function (ctx){
 			/* the below is basically copied from the tree demo. not useful right now, keeping for later
