@@ -187,6 +187,7 @@ require([
 		//world.add(Physics.behavior('interactive', {el: renderer.el}));
 
         var handlekey = function handlekey(evt){
+            evt.preventDefault(); // stop things like space scrolling the page
             //console.log(evt);
             //console.log(e);
             switch(evt.keyCode)
