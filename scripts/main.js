@@ -109,7 +109,7 @@ require([
                 constr.remove(this.ropeConstraint);
             }
             
-            this.shootAnchor = function(angle){
+            this.shootAnchor = function(angle, type){
                 if (this.attachState == AttachStates.firing){
                     return;
                 }
@@ -123,7 +123,8 @@ require([
                     vx: vx,
                     vy: vy,
                     radius: 7,
-                    label: 'bullet'
+                    label: 'bullet',
+                    bulletType: type
                 });
                 constr.remove(this.ropeConstraint);
                 world.add(b);
@@ -146,6 +147,11 @@ require([
                 constr.remove(this.ropeConstraint);
                 this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, len);
             };
+
+            this.yankPlayer = function(pos){
+               console.log("yanking " + pos); 
+
+            }
         }
 
         // end Player class
@@ -234,22 +240,33 @@ require([
 		document.addEventListener('keydown', handlekey, false);
 		document.addEventListener('keyup', handlekeyup, false);
 
-		function shootrope(pos){ // attach rope on click
-		    var relposX = pos.x - players[0].body.state.pos.x; // todo: don't use players[0]
-		    var relposY = pos.y - players[0].body.state.pos.y; 
-
-		    console.log("relpos: " + relposX + ", " + relposY);
-		        
-			var vpos = Physics.vector(relposX, relposY);
-			console.log(vpos);
-			var angle = vpos.angle() + 0.5*Math.PI;
-			    
-			players[0].shootAnchor(angle);
+		function shootrope(pos, type){ // attach rope on click
+		    var angle = angleBetweenPos(players[0].body.state.pos, pos);
+			players[0].shootAnchor(angle, type);
 		}
+
+		function angleBetweenPos(body, target){
+		    var relposX = target.x - body.x; // todo: don't use players[0]
+		    var relposY = target.y - body.y;
+
+		    //console.log("relpos: " + relposX + ", " + relposY);
+			var vpos = Physics.vector(relposX, relposY);
+			var angle = vpos.angle() + 0.5*Math.PI;
+			return angle;
+
+        }
 
         world.on('collisions:hook', function(data){ // todo: generalize hook collision hook to work with multiple players
             world.remove(data.bullet)
-            players[0].attachRope(data.bullet.state.pos);
+            switch(data.type)
+            {
+                case 'hook': // swinging hook event
+                    players[0].attachRope(data.bullet.state.pos);
+                    break;
+                case 'yank':
+                    console.log("yank!!!!");
+                    break;
+            }
         });
         world.on('collisions:detected', function(data){
             //console.log(data);
@@ -269,7 +286,7 @@ require([
                     if (obj.label != 'player'){
 
                         console.log("bullet collision with a " + obj.label);
-                        var data = {'bullet': bul, 'object': obj}
+                        var data = {'bullet': bul, 'object': obj, 'type': bul.bulletType}
                         world.emit('collisions:hook', data)
                     }
                     else
@@ -290,9 +307,10 @@ require([
             var pos = getCoords(e);
             switch(e.button){
                 case 0: // lmb
-                    shootrope(pos);
+                    shootrope(pos, 'hook');
                     break;
                 case 2: // rmb
+                    shootrope(pos, 'yank');
                     console.log("rmb");
                     break;
             }
