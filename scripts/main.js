@@ -141,18 +141,24 @@ require([
                 case 83:
                     resizerope(e, 10);
                     break;
+                case 65: // a (left)
+                    ball.accelerate(Physics.vector(-0.001));
+                    break;
+                case 68: // d (right)
+                    ball.accelerate(Physics.vector(0.001));
+                    break;
                 default:
                     //fireball();
             }
 
-            console.log(e.targetLength);
+            //console.log(e.targetLength);
         }
 
-		document.addEventListener('keypress', handlekey, false);
+		document.addEventListener('keydown', handlekey, false);
 
         function fireball(angle){
-            vx = Math.sin(angle);
-            vy = Math.cos(angle)*-1;
+            vx = Math.sin(angle)*2;
+            vy = Math.cos(angle)*-2;
             console.log("angle:" + angle + ", " + vx + " " + vy); 
             console.log(angle);
             //console.log(vx);
@@ -183,6 +189,7 @@ require([
 			var angle = vpos.angle() + 0.5*Math.PI;
 			//angle = ball.state.pos.angle(vpos);
 			    
+			constr.remove(e)
 			fireball(angle);
 			//attach.state.pos = vpos;
 			//attachrope(ball,attach);
