@@ -135,7 +135,7 @@ require([
             };
 
             this.resizeRope = function(diff){ // todo: make this less clunkier. probably set a flag and let the clock deal with it each iter
-                if (this.AttachState != AttachStates.attached){ return; }
+                if (this.attachState != AttachStates.attached){ return; }
                 var len = this.ropeConstraint.targetLength + diff;
                 if (len<0){ len = 0; }
                 constr.remove(this.ropeConstraint);
