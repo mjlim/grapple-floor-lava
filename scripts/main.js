@@ -157,6 +157,9 @@ require([
                 var angle = angleBetweenPos(this.body.state.pos, pos);
                 vx = Math.sin(angle)*yankvel;
                 vy = Math.cos(angle)*-1*yankvel;
+
+                // cut current acceleration in half before applying new accel
+                this.body.state.acc = this.body.state.acc.mult(0.3);
                 this.accelerate(Physics.vector(vx, vy));
 
             }
