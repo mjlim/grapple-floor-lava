@@ -86,13 +86,13 @@ require([
                     y: pos.y,
                     vx: 0.2,
                     vy: 0.01,
-                    radius: 20,
+                    radius: 8,
                     label: 'player'
             });
             this.attach = Physics.body('circle', {
                     x: pos.x,
                     y: pos.y - 50, // todo: something smarter
-                    radius: 5,
+                    radius: 4,
                     treatment: 'static'
             });
             this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, 100);
@@ -114,15 +114,15 @@ require([
                     return;
                 }
                 this.attachState = AttachStates.firing;
-                vx = Math.sin(angle)*2;
-                vy = Math.cos(angle)*-2;
+                vx = Math.sin(angle)*1.5;
+                vy = Math.cos(angle)*-1.5;
                 //console.log("angle:" + angle + ", " + vx + " " + vy); 
                 var b = Physics.body('circle', {
                     x: this.body.state.pos.x,
                     y: this.body.state.pos.y,
                     vx: vx,
                     vy: vy,
-                    radius: 7,
+                    radius: 3,
                     label: 'bullet',
                     bulletType: type
                 });
@@ -153,7 +153,7 @@ require([
                 this.attachState = AttachStates.free;
             
                 console.log("yanking " + pos); 
-                var yankvel = 0.05;
+                var yankvel = 0.04;
                 var angle = angleBetweenPos(this.body.state.pos, pos);
                 vx = Math.sin(angle)*yankvel;
                 vy = Math.cos(angle)*-1*yankvel;
