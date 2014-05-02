@@ -149,7 +149,15 @@ require([
             };
 
             this.yankPlayer = function(pos){
-               console.log("yanking " + pos); 
+                constr.remove(this.ropeConstraint);
+                this.attachState = AttachStates.free;
+            
+                console.log("yanking " + pos); 
+                var yankvel = 0.05;
+                var angle = angleBetweenPos(this.body.state.pos, pos);
+                vx = Math.sin(angle)*yankvel;
+                vy = Math.cos(angle)*-1*yankvel;
+                this.accelerate(Physics.vector(vx, vy));
 
             }
         }
@@ -264,7 +272,7 @@ require([
                     players[0].attachRope(data.bullet.state.pos);
                     break;
                 case 'yank':
-                    console.log("yank!!!!");
+                    players[0].yankPlayer(data.bullet.state.pos);
                     break;
             }
         });
