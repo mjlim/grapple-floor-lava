@@ -12,6 +12,7 @@ require.config({
 });
 
 require([
+		'gamepad',
 		'physicsjs',
 		'physicsjs/renderers/canvas',
 		'physicsjs/behaviors/edge-collision-detection',
@@ -23,7 +24,7 @@ require([
 		'physicsjs/behaviors/interactive',
 		'physicsjs/bodies/circle', // circle
 		'physicsjs/bodies/rectangle' // rectangle
-	], function( Physics ) {
+	], function( Gamepad, Physics ) {
 		// do something with the circles
 		//
 	Physics(function(world){
@@ -251,6 +252,29 @@ require([
 		document.addEventListener('keydown', handlekey, false);
 		document.addEventListener('keyup', handlekeyup, false);
 
+		Gamepad.onButtonDown = function(buttonnum){
+		    switch(buttonnum)
+            {
+                case 12: // up
+                    players[0].ropeLengthDelta = -2;
+                    break;
+                case 13: // down
+                    players[0].ropeLengthDelta = 2;
+                    break;
+            }
+        };
+
+		Gamepad.onButtonUp = function(buttonnum){
+		    switch(buttonnum)
+            {
+                case 12: // up
+                case 13: // down
+                    players[0].ropeLengthDelta = 0;
+                    break;
+            }
+        };
+
+
 		function shootrope(pos, type){ // attach rope on click
 		    var angle = angleBetweenPos(players[0].body.state.pos, pos);
 			players[0].shootAnchor(angle, type);
@@ -380,6 +404,9 @@ require([
 
 		// subscribe to ticker to advance the simulation
 		Physics.util.ticker.on(function(time,dt){
+		    // update gamepad
+            Gamepad.tick();
+		    // update simulation
 			world.step(time);
 		});
 
