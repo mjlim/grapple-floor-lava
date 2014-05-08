@@ -189,28 +189,52 @@ require([
 		
 		var bullet = [];
 
-		var platform = Physics.body('rectangle', {
-				x: 350,
-				y: 100,
-				width:400,
-				height:15,
-				treatment: 'static'
-		});
-		var platformtwo = Physics.body('rectangle', {
-				x: 700,
-				y: 400,
-				width:300,
-				height:100,
-				treatment: 'static'
-		});
+		var objects = [
+		    Physics.body('rectangle', {
+                x: 195,
+                y: 134,
+                width: 200,
+                height: 70,
+                treatment: 'static'}),
+		    Physics.body('rectangle', {
+                x: 531,
+                y: 134,
+                width: 200,
+                height: 70,
+                treatment: 'static'}),
+		    Physics.body('rectangle', {
+                x: 209,
+                y: 441,
+                width: 94,
+                height: 285,
+                treatment: 'static'}),
+		    Physics.body('rectangle', {
+                x: 478,
+                y: 540,
+                width: 94,
+                height: 285,
+                treatment: 'static'}),
+		    Physics.body('rectangle', {
+                x: 795,
+                y: 540,
+                width: 51,
+                height: 51,
+                treatment: 'static'}),
+		    Physics.body('rectangle', {
+                x: 857,
+                y: 134,
+                width: 200,
+                height: 70,
+                treatment: 'static'}) ];
 
-		world.add(platform);
-		world.add(platformtwo);
 
+        for (var i=0; i<objects.length; ++i){
+            world.add(objects[i]);
+        }
 
 
 		// ensure objects bounce when edge collision detected
-		world.add(Physics.behavior('body-impulse-response', {check: 'collisions:applyimpulse'}).applyTo([players[0].body, platform]) ); // todo: filter objects differently (don't want bullets to bounce)
+		world.add(Physics.behavior('body-impulse-response', {check: 'collisions:applyimpulse'}).applyTo([players[0].body]) ); // todo: filter objects differently (don't want bullets to bounce)
 
 		world.add(Physics.behavior('body-collision-detection'));
 		world.add(Physics.behavior('sweep-prune'));
@@ -265,51 +289,80 @@ require([
 		document.addEventListener('keyup', handlekeyup, false);
 
         // handle gamepad events
+        
+        var gamepadPlayerMapping = [];
+
 		Gamepad.onButtonDown = function(buttonnum, cnum){
+		    var playernum = getOrAssignControllerPlayer(cnum);
+		    var p = players[playernum];
 		    switch(buttonnum)
             {
                 case 0: // A
-                    players[0].detachRope();
+                    p.detachRope();
                     break;
                 case 12: // up
-                    players[0].ropeLengthDelta = -2;
+                    p.ropeLengthDelta = -2;
                     break;
                 case 13: // down
-                    players[0].ropeLengthDelta = 2;
+                    p.ropeLengthDelta = 2;
                     break;
                 case 6: // LT
-                    players[0].shootAnchor(players[0].lookAngle, 'hook');
+                    p.shootAnchor(players[0].lookAngle, 'hook');
                     break;
                 case 7: // RT
-                    players[0].shootAnchor(players[0].lookAngle, 'yank');
+                    p.shootAnchor(players[0].lookAngle, 'yank');
                     break;
             }
         };
 
 		Gamepad.onButtonUp = function(buttonnum, cnum){
+		    var playernum = getOrAssignControllerPlayer(cnum);
+		    var p = players[playernum];
 		    switch(buttonnum)
             {
                 case 12: // up
                 case 13: // down
-                    players[0].ropeLengthDelta = 0;
+                    p.ropeLengthDelta = 0;
                     break;
             }
         };
 
         Gamepad.onLeftStick = function(x,y, cnum){
-            var stickv = Physics.vector(x,y);
-            var angle = stickv.angle() + 0.5*Math.PI;
-            players[0].lookAngle = angle;
+            var playernum = getControllerPlayer(cnum);
+            if (playernum == -1) { return; } // if this controller hasn't pressed a button yet, ignore it.
+            var p = players[playernum];
+
+            if(Math.abs(x) > Gamepad.deadzone || Math.abs(y) > Gamepad.deadzone){ // deadzone for look angle.
+                var stickv = Physics.vector(x,y);
+                var angle = stickv.angle() + 0.5*Math.PI;
+                p.lookAngle = angle;
+            }
 
             if(Math.abs(y) > Gamepad.deadzone){
-                players[0].ropeLengthDelta = y*2;
+                p.ropeLengthDelta = y*2;
             }
             else {
-                players[0].ropeLengthDelta = 0;
+                p.ropeLengthDelta = 0;
             }
 
-            players[0].horizontalShift = x;
+            p.horizontalShift = x;
         }
+
+        function getOrAssignControllerPlayer(cnum){
+            var undef;
+            if (gamepadPlayerMapping[cnum] === undef){ // controller not assigned a player yet
+                gamepadPlayerMapping[cnum] = 0; // todo: expand when more players available or create a player here or something
+            }
+            return gamepadPlayerMapping[cnum];
+        }
+        function getControllerPlayer(cnum){
+            var undef;
+            if (gamepadPlayerMapping[cnum] === undef){ // controller not assigned a player
+                return -1;
+            } 
+            return gamepadPlayerMapping[cnum];
+        }
+
 
 
         // done gamepad events

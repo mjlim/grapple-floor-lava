@@ -21,9 +21,9 @@ define(function () {
             
             // left stick
             // check that it is out of deadzone
-            if(Math.abs(padstate.axes[0]) > this.deadzone && Math.abs(padstate.axes[1]) > this.deadzone){
+            //if(Math.abs(padstate.axes[0]) > this.deadzone && Math.abs(padstate.axes[1]) > this.deadzone){
                 this.onLeftStick(padstate.axes[0], padstate.axes[1], cnum);
-            }
+            //}
         },
         onButtonDown: function(buttonnum, controller){ // overwrite this in actual game code
             console.log("button " + buttonnum + " pressed");
