@@ -1,6 +1,8 @@
 define(function () {
     // setup
     console.log("SETUP");
+
+    var deadzone = 0.1;
     
     return {
         lastpresses: [],
@@ -22,12 +24,21 @@ define(function () {
                     lastpress[i] = false;
                 }
             }
+            
+            // left stick
+            // check that it is out of deadzone
+            if(Math.abs(padstate.axes[0]) > deadzone && Math.abs(padstate.axes[1]) > deadzone){
+                this.onLeftStick(padstate.axes[0], padstate.axes[1]);
+            }
         },
         onButtonDown: function(buttonnum){ // overwrite this in actual game code
             console.log("button " + buttonnum + " pressed");
         },
         onButtonUp: function(buttonnum){ // overwrite this in actual game code
             console.log("button " + buttonnum + " released");
+        },
+        onLeftStick: function(x,y){ // overwrite this in actual game code
+            console.log("axis: " + x + ", " + y);
         },
         tick: function(){
             // handle tick
@@ -38,14 +49,12 @@ define(function () {
                 var undef;
 
                 // initialize last presses if undefined
-                if(this.lastpresses[i] === undef){
+                if(this.lastpresses[i] === undef && pad !== undef){
                     this.lastpresses[i] = [];
                     for(var j=0; j<pad.buttons.length; ++j){
                         this.lastpresses[i][j] = false;
                     }
                 }
-
-
                 this.callback(pad, this.lastpresses[i]);
             }
         },

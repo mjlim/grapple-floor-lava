@@ -99,7 +99,9 @@ require([
             this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, 100);
             this.attachState = AttachStates.attached;
 
-            this.ropeLengthDelta = 0
+            this.ropeLengthDelta = 0;
+
+            this.lookAngle = 0;
 
             world.add(this.body);
             world.add(this.attach);
@@ -252,14 +254,24 @@ require([
 		document.addEventListener('keydown', handlekey, false);
 		document.addEventListener('keyup', handlekeyup, false);
 
+        // handle gamepad events
 		Gamepad.onButtonDown = function(buttonnum){
 		    switch(buttonnum)
             {
+                case 0: // A
+                    players[0].detachRope();
+                    break;
                 case 12: // up
                     players[0].ropeLengthDelta = -2;
                     break;
                 case 13: // down
                     players[0].ropeLengthDelta = 2;
+                    break;
+                case 6: // LT
+                    players[0].shootAnchor(players[0].lookAngle, 'hook');
+                    break;
+                case 7: // RT
+                    players[0].shootAnchor(players[0].lookAngle, 'yank');
                     break;
             }
         };
@@ -273,6 +285,13 @@ require([
                     break;
             }
         };
+
+        Gamepad.onLeftStick = function(x,y){
+            var stickv = Physics.vector(x,y);
+            var angle = stickv.angle() + 0.5*Math.PI;
+            players[0].lookAngle = angle;
+        }
+
 
 
 		function shootrope(pos, type){ // attach rope on click
