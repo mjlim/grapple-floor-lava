@@ -60,6 +60,9 @@ require([
 		    if(players[0].ropeLengthDelta != 0){
 		        players[0].resizeRope(players[0].ropeLengthDelta);
             }
+            if(Math.abs(players[0].horizontalShift) > Gamepad.deadzone){ 
+                players[0].accelerate(Physics.vector(players[0].horizontalShift * 0.0005)); // todo: eliminate magic number
+            }
 			world.render();
 		});
 
@@ -102,6 +105,7 @@ require([
             this.ropeLengthDelta = 0;
 
             this.lookAngle = 0;
+            this.horizontalShift = 0; // player biasing left or right
 
             world.add(this.body);
             world.add(this.attach);
@@ -290,6 +294,10 @@ require([
             var stickv = Physics.vector(x,y);
             var angle = stickv.angle() + 0.5*Math.PI;
             players[0].lookAngle = angle;
+
+
+            players[0].ropeLengthDelta = y*2;
+            players[0].horizontalShift = x;
         }
 
 

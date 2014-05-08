@@ -1,15 +1,12 @@
 define(function () {
     // setup
-    console.log("SETUP");
-
-    var deadzone = 0.1;
-    
     return {
+        deadzone: 0.1,
         lastpresses: [],
         variable: "name",
         callback: function(padstate, lastpress){
-            //console.log("button pressed " + padstate);
             var undef;
+            if(padstate === undef){ return; } // if there's no info just bail out instead of breaking.
 
             for (var i=0; i<padstate.buttons.length; ++i){
                 if (padstate.buttons[i].pressed){
@@ -27,7 +24,7 @@ define(function () {
             
             // left stick
             // check that it is out of deadzone
-            if(Math.abs(padstate.axes[0]) > deadzone && Math.abs(padstate.axes[1]) > deadzone){
+            if(Math.abs(padstate.axes[0]) > this.deadzone && Math.abs(padstate.axes[1]) > this.deadzone){
                 this.onLeftStick(padstate.axes[0], padstate.axes[1]);
             }
         },
