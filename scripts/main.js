@@ -121,8 +121,8 @@ require([
                     return;
                 }
                 this.attachState = AttachStates.firing;
-                vx = Math.sin(angle)*1.5;
-                vy = Math.cos(angle)*-1.5;
+                var vx = Math.sin(angle)*1.5;
+                var vy = Math.cos(angle)*-1.5;
                 //console.log("angle:" + angle + ", " + vx + " " + vy); 
                 var b = Physics.body('circle', {
                     x: this.body.state.pos.x,
@@ -162,14 +162,20 @@ require([
                 console.log("yanking " + pos); 
                 var yankvel = 0.04;
                 var angle = angleBetweenPos(this.body.state.pos, pos);
-                vx = Math.sin(angle)*yankvel;
-                vy = Math.cos(angle)*-1*yankvel;
+                var vx = Math.sin(angle)*yankvel;
+                var vy = Math.cos(angle)*-1*yankvel;
 
                 // cut current acceleration in half before applying new accel
                 this.body.state.acc = this.body.state.acc.mult(0.3);
                 this.accelerate(Physics.vector(vx, vy));
 
             }
+            this.getLookMarkerPos = function(){
+                var x = Math.sin(this.lookAngle) * 40; // todo: 10 to variable for look dist
+                var y = Math.cos(this.lookAngle) * -40; // todo: 10 to variable for look dist
+                return Physics.vector(x + this.body.state.pos.x, y + this.body.state.pos.y);
+            }
+
         }
 
         // end Player class
@@ -259,7 +265,7 @@ require([
 		document.addEventListener('keyup', handlekeyup, false);
 
         // handle gamepad events
-		Gamepad.onButtonDown = function(buttonnum){
+		Gamepad.onButtonDown = function(buttonnum, cnum){
 		    switch(buttonnum)
             {
                 case 0: // A
@@ -280,7 +286,7 @@ require([
             }
         };
 
-		Gamepad.onButtonUp = function(buttonnum){
+		Gamepad.onButtonUp = function(buttonnum, cnum){
 		    switch(buttonnum)
             {
                 case 12: // up
@@ -290,16 +296,23 @@ require([
             }
         };
 
-        Gamepad.onLeftStick = function(x,y){
+        Gamepad.onLeftStick = function(x,y, cnum){
             var stickv = Physics.vector(x,y);
             var angle = stickv.angle() + 0.5*Math.PI;
             players[0].lookAngle = angle;
 
+            if(Math.abs(y) > Gamepad.deadzone){
+                players[0].ropeLengthDelta = y*2;
+            }
+            else {
+                players[0].ropeLengthDelta = 0;
+            }
 
-            players[0].ropeLengthDelta = y*2;
             players[0].horizontalShift = x;
         }
 
+
+        // done gamepad events
 
 
 		function shootrope(pos, type){ // attach rope on click
@@ -422,6 +435,10 @@ require([
 			if(players[0].attachState == AttachStates.attached){
                 renderer.drawLine(players[0].body.state.pos, players[0].attach.state.pos, ropeStyles, ctx);
             }
+
+            // start display look angle. 
+            renderer.drawLine(players[0].body.state.pos, players[0].getLookMarkerPos(), ropeStyles, ctx);
+            // end display look angle
 		});
 
 		renderer.addLayer('ropes', null, { zIndex:0 }).render = function(){
