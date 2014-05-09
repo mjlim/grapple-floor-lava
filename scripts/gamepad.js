@@ -19,11 +19,9 @@ define(function () {
                 }
             }
             
-            // left stick
-            // check that it is out of deadzone
-            //if(Math.abs(padstate.axes[0]) > this.deadzone && Math.abs(padstate.axes[1]) > this.deadzone){
-                this.onLeftStick(padstate.axes[0], padstate.axes[1], cnum);
-            //}
+            // sticks
+            this.onLeftStick(padstate.axes[0], padstate.axes[1], cnum);
+            this.onRightStick(padstate.axes[2], padstate.axes[3], cnum);
         },
         onButtonDown: function(buttonnum, controller){ // overwrite this in actual game code
             console.log("button " + buttonnum + " pressed");
@@ -32,6 +30,9 @@ define(function () {
             console.log("button " + buttonnum + " released");
         },
         onLeftStick: function(x,y, controller){ // overwrite this in actual game code
+            console.log("axis: " + x + ", " + y);
+        },
+        onRightStick: function(x,y, controller){ // overwrite this in actual game code
             console.log("axis: " + x + ", " + y);
         },
         tick: function(){

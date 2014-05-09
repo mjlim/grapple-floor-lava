@@ -66,6 +66,22 @@ require([
                     players[i].accelerate(Physics.vector(players[i].horizontalShift * 0.0005)); // todo: eliminate magic number
                 }
             }
+
+            // look for bullets that are too far
+            var bullets = world.find({label: 'bullet'});
+            for (var i=0;i<bullets.length; ++i){
+                console.log(bullets[i]);
+                var b = bullets[i];
+                var p = players[b.playernum];
+
+                if(b.state.pos.dist(p.body.state.pos) > 300){ // 300 is rope length. todo: define elsewhere
+                    world.remove(b);
+                    if(p.attachState == AttachStates.firing){
+                        p.attachState = AttachStates.free;
+                    }
+                }
+
+            }
 			world.render();
 		});
 
@@ -125,9 +141,11 @@ require([
                 if (this.attachState == AttachStates.firing){
                     return;
                 }
-                this.attachState = AttachStates.firing;
-                var vx = Math.sin(angle)*1.5;
-                var vy = Math.cos(angle)*-1.5;
+                if(type == 'hook'){
+                    this.attachState = AttachStates.firing;
+                }
+                var vx = Math.sin(angle);
+                var vy = Math.cos(angle)*-1;
                 //console.log("angle:" + angle + ", " + vx + " " + vy); 
                 var b = Physics.body('circle', {
                     x: this.body.state.pos.x,
@@ -139,7 +157,9 @@ require([
                     bulletType: type,
                     playernum: this.playernum
                 });
-                constr.remove(this.ropeConstraint);
+                if(type == 'hook'){
+                    constr.remove(this.ropeConstraint);
+                }
                 world.add(b);
                 bullet.push(b);
             }
@@ -162,8 +182,8 @@ require([
             };
 
             this.yankPlayer = function(pos){
-                constr.remove(this.ropeConstraint);
-                this.attachState = AttachStates.free;
+                //constr.remove(this.ropeConstraint);
+                //this.attachState = AttachStates.free;
             
                 console.log("yanking " + pos); 
                 var yankvel = 0.04;
@@ -216,6 +236,12 @@ require([
                 y: 540,
                 width: 94,
                 height: 285,
+                treatment: 'static'}),
+		    Physics.body('rectangle', {
+                x: 795,
+                y: 895,
+                width: 51,
+                height: 51,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 795,
@@ -301,6 +327,7 @@ require([
 		    switch(buttonnum)
             {
                 case 0: // A
+                case 5: // RB
                     p.detachRope();
                     break;
                 case 12: // up
@@ -330,7 +357,7 @@ require([
             }
         };
 
-        Gamepad.onLeftStick = function(x,y, cnum){
+        Gamepad.onRightStick = function(x,y, cnum){
             var playernum = getControllerPlayer(cnum);
             if (playernum == -1) { return; } // if this controller hasn't pressed a button yet, ignore it.
             var p = players[playernum];
@@ -340,6 +367,13 @@ require([
                 var angle = stickv.angle() + 0.5*Math.PI;
                 p.lookAngle = angle;
             }
+
+        }
+
+        Gamepad.onLeftStick = function(x,y, cnum){
+            var playernum = getControllerPlayer(cnum);
+            if (playernum == -1) { return; } // if this controller hasn't pressed a button yet, ignore it.
+            var p = players[playernum];
 
             if(Math.abs(y) > Gamepad.deadzone){
                 p.ropeLengthDelta = y*2;
