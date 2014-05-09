@@ -65,12 +65,12 @@ require([
                 if(Math.abs(players[i].horizontalShift) > Gamepad.deadzone){ 
                     players[i].accelerate(Physics.vector(players[i].horizontalShift * 0.0005)); // todo: eliminate magic number
                 }
+                players[i].yankPlayer(); // tell this player to yank itself (won't do anything if not yank attached)
             }
 
             // look for bullets that are too far
             var bullets = world.find({label: 'bullet'});
             for (var i=0;i<bullets.length; ++i){
-                console.log(bullets[i]);
                 var b = bullets[i];
                 var p = players[b.playernum];
 
@@ -110,6 +110,7 @@ require([
                     vx: 0.2,
                     vy: 0.01,
                     radius: 8,
+                    restitution: 0.2,
                     label: 'player'
             });
             this.attach = Physics.body('circle', {
@@ -119,9 +120,17 @@ require([
                     treatment: 'static'
             });
 
+            this.yankAttach = Physics.body('circle', {
+                    x: pos.x,
+                    y: pos.y - 50, // todo: something smarter
+                    radius: 4,
+                    treatment: 'static'
+            });
+
             this.playernum = playernum;
             this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, 100);
             this.attachState = AttachStates.attached;
+            this.yankAttachState = AttachStates.free;
 
             this.ropeLengthDelta = 0;
 
@@ -130,6 +139,7 @@ require([
 
             world.add(this.body);
             world.add(this.attach);
+            world.add(this.yankAttach);
 
             this.accelerate = function(v){this.body.accelerate(v);};
             this.detachRope = function(){
@@ -143,6 +153,9 @@ require([
                 }
                 if(type == 'hook'){
                     this.attachState = AttachStates.firing;
+                }
+                else if(type == 'yank'){
+                    this.yankAttachState = AttachStates.firing;
                 }
                 var vx = Math.sin(angle);
                 var vy = Math.cos(angle)*-1;
@@ -167,7 +180,7 @@ require([
             // change this player's attachment position to somewhere else
             this.attachRope = function(pos){
                 constr.remove(this.ropeConstraint); // remove this constraint if it exists
-                this.attach.state.pos = pos
+                this.attach.state.pos = pos;
                 var dist = this.body.state.pos.dist(this.attach.state.pos);
                 this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, dist);
                 this.attachState = AttachStates.attached;
@@ -181,18 +194,25 @@ require([
                 this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, len);
             };
 
-            this.yankPlayer = function(pos){
-                //constr.remove(this.ropeConstraint);
-                //this.attachState = AttachStates.free;
+            this.setYankAttach = function(pos){
+                this.yankAttach.state.pos = pos;
+                this.yankAttachState = AttachStates.attached;
+
+            }
+            this.releaseYank = function(){
+                this.yankAttachState = AttachStates.free;
+            }
+
+            this.yankPlayer = function(){
+                if(this.yankAttachState != AttachStates.attached) { return; }
             
-                console.log("yanking " + pos); 
-                var yankvel = 0.04;
-                var angle = angleBetweenPos(this.body.state.pos, pos);
+                var yankvel = 0.002;
+                var angle = angleBetweenPos(this.body.state.pos, this.yankAttach.state.pos);
                 var vx = Math.sin(angle)*yankvel;
                 var vy = Math.cos(angle)*-1*yankvel;
 
                 // cut current acceleration in half before applying new accel
-                this.body.state.acc = this.body.state.acc.mult(0.3);
+                this.body.state.acc = this.body.state.acc.mult(0.5);
                 this.accelerate(Physics.vector(vx, vy));
 
             }
@@ -218,42 +238,49 @@ require([
                 y: 134,
                 width: 200,
                 height: 70,
+                restitution: 0.2,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 531,
                 y: 134,
                 width: 200,
                 height: 70,
+                restitution: 0.2,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 209,
                 y: 441,
                 width: 94,
                 height: 285,
+                restitution: 0.2,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 478,
                 y: 540,
                 width: 94,
                 height: 285,
+                restitution: 0.2,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 795,
                 y: 895,
                 width: 51,
                 height: 51,
+                restitution: 0.2,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 795,
                 y: 540,
                 width: 51,
                 height: 51,
+                restitution: 0.2,
                 treatment: 'static'}),
 		    Physics.body('rectangle', {
                 x: 857,
                 y: 134,
                 width: 200,
                 height: 70,
+                restitution: 0.2,
                 treatment: 'static'}) ];
 
 
@@ -354,6 +381,8 @@ require([
                 case 13: // down
                     p.ropeLengthDelta = 0;
                     break;
+                case 7: // RT (letting go of yank)
+                    p.releaseYank();
             }
         };
 
@@ -432,10 +461,14 @@ require([
             switch(data.type)
             {
                 case 'hook': // swinging hook event
-                    p.attachRope(data.bullet.state.pos);
+                    if (p.attachState == AttachStates.firing){
+                        p.attachRope(data.bullet.state.pos);
+                    }
                     break;
                 case 'yank':
-                    p.yankPlayer(data.bullet.state.pos);
+                    if (p.yankAttachState == AttachStates.firing){
+                        p.setYankAttach(data.bullet.state.pos);
+                    }
                     break;
             }
         });
