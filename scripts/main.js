@@ -484,7 +484,9 @@ require([
         world.on('collisions:detected', function(data){
             //console.log(data);
             var c;
+            var undef;
             for (var i=0, l=data.collisions.length; i<l; i++){
+                if(data.collisions === undef) { continue; } // would break sometimes with Uncaught TypeError: Cannot read property '1' of undefined. 
                 c = data.collisions[i];
                 if (c.bodyA.label == 'bullet' || c.bodyB.label == 'bullet'){
                     var bul;
