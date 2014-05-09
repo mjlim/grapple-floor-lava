@@ -13,7 +13,14 @@
         </ol>
         <p>inspirations: <a href="http://www.starwhal.com/">starwhal</a>, <a href="http://maxistentialism.com/samuraigunn/">samurai gunn</a></p>
         <p>current status (may 8): multiple players at a time is working, attach controllers and push a button.</p>
-        <p>gamepad support may require running beta channel chrome!</p>
+
+        <p id="status">gamepad api doesn't appear to be supported by your browser-- try chrome beta.</p>
+        <script>
+            if(navigator.getGamepads){
+                var el = document.getElementById("status");
+                el.innerHTML="looks like your browser supports the gamepad API.";
+            }
+        </script>
 
         <p><a href="game.html">try what I have right now</a></p>
         <p><a href="https://github.com/mjlim/grapple-floor-lava">the github repo</a></p>
