@@ -57,11 +57,14 @@ require([
 
 		// render each step
 		world.on('step', function(){
-		    if(players[0].ropeLengthDelta != 0){
-		        players[0].resizeRope(players[0].ropeLengthDelta);
-            }
-            if(Math.abs(players[0].horizontalShift) > Gamepad.deadzone){ 
-                players[0].accelerate(Physics.vector(players[0].horizontalShift * 0.0005)); // todo: eliminate magic number
+
+		    for (var i=0; i<players.length; ++i){
+                if(players[i].ropeLengthDelta != 0){
+                    players[i].resizeRope(players[i].ropeLengthDelta);
+                }
+                if(Math.abs(players[i].horizontalShift) > Gamepad.deadzone){ 
+                    players[i].accelerate(Physics.vector(players[i].horizontalShift * 0.0005)); // todo: eliminate magic number
+                }
             }
 			world.render();
 		});
@@ -84,7 +87,7 @@ require([
 		var AttachStates = Object.freeze({"free":1, "attached":2, "firing":3});
 
         // Player class
-        function Player(pos) {
+        function Player(pos, playernum) {
             this.body = Physics.body('circle', {
                     x: pos.x,
                     y: pos.y,
@@ -99,6 +102,8 @@ require([
                     radius: 4,
                     treatment: 'static'
             });
+
+            this.playernum = playernum;
             this.ropeConstraint = constr.distanceConstraint(this.body, this.attach, 0, 100);
             this.attachState = AttachStates.attached;
 
@@ -131,7 +136,8 @@ require([
                     vy: vy,
                     radius: 3,
                     label: 'bullet',
-                    bulletType: type
+                    bulletType: type,
+                    playernum: this.playernum
                 });
                 constr.remove(this.ropeConstraint);
                 world.add(b);
@@ -182,11 +188,8 @@ require([
 
 		// create a player
 		var players = [];
-		players[0] = new Player(Physics.vector(50,60));
+		players[0] = new Player(Physics.vector(50,60), players.length);
 
-		// add a circle
-
-		
 		var bullet = [];
 
 		var objects = [
@@ -307,10 +310,10 @@ require([
                     p.ropeLengthDelta = 2;
                     break;
                 case 6: // LT
-                    p.shootAnchor(players[0].lookAngle, 'hook');
+                    p.shootAnchor(p.lookAngle, 'hook');
                     break;
                 case 7: // RT
-                    p.shootAnchor(players[0].lookAngle, 'yank');
+                    p.shootAnchor(p.lookAngle, 'yank');
                     break;
             }
         };
@@ -351,7 +354,8 @@ require([
         function getOrAssignControllerPlayer(cnum){
             var undef;
             if (gamepadPlayerMapping[cnum] === undef){ // controller not assigned a player yet
-                gamepadPlayerMapping[cnum] = 0; // todo: expand when more players available or create a player here or something
+                var pnum = addAPlayer();
+                gamepadPlayerMapping[cnum] = pnum; // todo: expand when more players available or create a player here or something
             }
             return gamepadPlayerMapping[cnum];
         }
@@ -363,9 +367,13 @@ require([
             return gamepadPlayerMapping[cnum];
         }
 
-
-
         // done gamepad events
+
+        function addAPlayer(){
+            players.push(new Player(Physics.vector(50,60), players.length));
+            return players.length - 1;
+        }
+
 
 
 		function shootrope(pos, type){ // attach rope on click
@@ -374,7 +382,7 @@ require([
 		}
 
 		function angleBetweenPos(body, target){
-		    var relposX = target.x - body.x; // todo: don't use players[0]
+		    var relposX = target.x - body.x; 
 		    var relposY = target.y - body.y;
 
 		    //console.log("relpos: " + relposX + ", " + relposY);
@@ -386,13 +394,14 @@ require([
 
         world.on('collisions:hook', function(data){ // todo: generalize hook collision hook to work with multiple players
             world.remove(data.bullet)
+            var p = players[data.playernum];
             switch(data.type)
             {
                 case 'hook': // swinging hook event
-                    players[0].attachRope(data.bullet.state.pos);
+                    p.attachRope(data.bullet.state.pos);
                     break;
                 case 'yank':
-                    players[0].yankPlayer(data.bullet.state.pos);
+                    p.yankPlayer(data.bullet.state.pos);
                     break;
             }
         });
@@ -411,10 +420,11 @@ require([
                         bul = c.bodyB;
                         obj = c.bodyA;
                     }
+                    var pnum = bul.playernum;
                     if (obj.label != 'player'){
 
                         console.log("bullet collision with a " + obj.label);
-                        var data = {'bullet': bul, 'object': obj, 'type': bul.bulletType}
+                        var data = {'bullet': bul, 'object': obj, 'type': bul.bulletType, 'playernum': pnum}
                         world.emit('collisions:hook', data)
                     }
                     else
@@ -484,14 +494,15 @@ require([
 				renderer.drawLine(c.bodyA.state.pos, c.bodyB.state.pos, ropeStyles, ctx);
 			}
 			*/
-			// todo: loop across players.
-			if(players[0].attachState == AttachStates.attached){
-                renderer.drawLine(players[0].body.state.pos, players[0].attach.state.pos, ropeStyles, ctx);
-            }
+            for(var i=0; i<players.length; ++i){
+                if(players[i].attachState == AttachStates.attached){
+                    renderer.drawLine(players[i].body.state.pos, players[i].attach.state.pos, ropeStyles, ctx);
+                }
 
-            // start display look angle. 
-            renderer.drawLine(players[0].body.state.pos, players[0].getLookMarkerPos(), ropeStyles, ctx);
-            // end display look angle
+                // start display look angle. 
+                renderer.drawLine(players[i].body.state.pos, players[i].getLookMarkerPos(), ropeStyles, ctx);
+                // end display look angle
+            }
 		});
 
 		renderer.addLayer('ropes', null, { zIndex:0 }).render = function(){
