@@ -48,9 +48,18 @@ require([
 		});
 
 		var ropeStyles = {
-			strokeStyle: '#FF0000',
-			lineWidth: 1
+			strokeStyle: '#66480C',
+			lineWidth: 2
 		};
+		var yankRopeStyles = {
+			strokeStyle: '#333333',
+			lineWidth: 2
+		};
+		var angleStyle = {
+			strokeStyle: '#FF0000',
+			lineWidth: 2
+		};
+
 
 		// add renderer
 		world.add(renderer);
@@ -212,7 +221,7 @@ require([
                 var vy = Math.cos(angle)*-1*yankvel;
 
                 // cut current acceleration in half before applying new accel
-                this.body.state.acc = this.body.state.acc.mult(0.5);
+                this.body.state.acc = this.body.state.acc.mult(0.3);
                 this.accelerate(Physics.vector(vx, vy));
 
             }
@@ -455,7 +464,7 @@ require([
 
         }
 
-        world.on('collisions:hook', function(data){ // todo: generalize hook collision hook to work with multiple players
+        world.on('collisions:hook', function(data){ 
             world.remove(data.bullet)
             var p = players[data.playernum];
             switch(data.type)
@@ -565,10 +574,27 @@ require([
                 if(players[i].attachState == AttachStates.attached){
                     renderer.drawLine(players[i].body.state.pos, players[i].attach.state.pos, ropeStyles, ctx);
                 }
+                if(players[i].yankAttachState == AttachStates.attached){
+                    renderer.drawLine(players[i].body.state.pos, players[i].yankAttach.state.pos, yankRopeStyles, ctx);
+                }
+
 
                 // start display look angle. 
-                renderer.drawLine(players[i].body.state.pos, players[i].getLookMarkerPos(), ropeStyles, ctx);
+                renderer.drawLine(players[i].body.state.pos, players[i].getLookMarkerPos(), angleStyle, ctx);
                 // end display look angle
+            }
+
+            // draw lines for bullets
+            var bullets = world.find({label: 'bullet'}); // todo: find happens twice per step-- once in render and once in step. can maybe optimize? same with above loop...
+            for (var i=0;i<bullets.length; ++i){
+                var b = bullets[i];
+                var p = players[b.playernum];
+                if(b.bulletType == 'hook'){
+                    renderer.drawLine(p.body.state.pos, b.state.pos, ropeStyles, ctx);
+                }
+                else if(b.bulletType == 'yank'){
+                    renderer.drawLine(p.body.state.pos, b.state.pos, yankRopeStyles, ctx);
+                }
             }
 		});
 
