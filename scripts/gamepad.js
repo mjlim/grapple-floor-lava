@@ -36,12 +36,15 @@ define(function () {
             console.log("axis: " + x + ", " + y);
         },
         tick: function(){
+            var undef;
             // handle tick
+            
+            if(navigator.getGamepads === undef) { return; } // no gamepad support? can't do anything.
+
             var gamepads = navigator.getGamepads();
 
             for (var i = 0; i<gamepads.length; ++i){
                 var pad = gamepads[i];
-                var undef;
 
                 // initialize last presses if undefined
                 if(this.lastpresses[i] === undef && pad !== undef){
