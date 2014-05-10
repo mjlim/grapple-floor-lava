@@ -1,7 +1,7 @@
 define(function () {
     // setup
     return {
-        deadzone: 0.1,
+        deadzone: 0.2,
         lastpresses: [],
         variable: "name",
         callback: function(padstate, lastpress, cnum){
